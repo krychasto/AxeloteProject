@@ -6,6 +6,7 @@ import "./CreateButton.css";
 import {Checkbox} from "primereact/checkbox";
 import {Axelote} from "@axelote/js";
 import {InputNumber} from "primereact/inputnumber";
+import {FileUpload, FileUploadHandlerEvent} from "primereact/fileupload";
 
 interface Props {
     handleTableUpdate: (e: React.FormEvent) => void;
@@ -18,6 +19,7 @@ const CreateButton: React.FC<Props> = ({handleTableUpdate}) => {
     const [model, setModel] = useState<string>("");
     const [vin, setVin] = useState<string>("");
     const [price, setPrice] = useState<number>(0);
+    const [image, setImage] = useState<string>("");
     const [engineCapacity, setEngineCapacity] = useState<string>("");
     const [isValidated, setIsValidated] = useState<boolean>(true);
 
@@ -33,13 +35,14 @@ const CreateButton: React.FC<Props> = ({handleTableUpdate}) => {
                 engine_capacity: engineCapacity,
                 is_available: checked ? "true" : "false",
                 price: price,
+                image: image
             }
 
             const axelote = new Axelote({
                 url: "http://localhost:8074"
             })
 
-            let result = await axelote.void("@sql insert into car (brand, model, vin, engine_capacity, is_available, price) VALUES (:brand, :model, :vin, :engine_capacity, :is_available, :price)", params);
+            let result = await axelote.void("@sql insert into car (brand, model, vin, engine_capacity, is_available, price, image) VALUES (:brand, :model, :vin, :engine_capacity, :is_available, :price, decode( :image, 'base64'):: bytea)", params);
 
             setVisible(false);
             setBrand("");
@@ -48,12 +51,24 @@ const CreateButton: React.FC<Props> = ({handleTableUpdate}) => {
             setEngineCapacity("");
             setPrice(0);
             setChecked(false);
+            setImage("");
             setIsValidated(true);
             handleTableUpdate(e);
         } else {
             setIsValidated(false);
         }
 
+    }
+
+    const handleUpload = (e: FileUploadHandlerEvent) => {
+        const file = e.files[0];
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64String = reader.result as string;
+            let image = base64String.split(',');
+            setImage(image[1]);
+        }
+        reader.readAsDataURL(file);
     }
 
     return (
@@ -90,6 +105,9 @@ const CreateButton: React.FC<Props> = ({handleTableUpdate}) => {
                         }} checked={checked}/>
                         <label> Available</label>
                     </div>
+                    <FileUpload mode="basic" name="demo[]" auto url="/api/upload" accept="image/*" maxFileSize={1000000}
+                                customUpload uploadHandler={(e) => handleUpload(e)} chooseLabel={"Upload image"}
+                                style={{width: "100%", marginBottom: "1rem"}}/>
                     {isValidated ? "" : <label style={{color: "red", marginBottom: "1rem"}}>Complete all fields</label>}
                     <Button icon="pi pi-plus" style={{width: "100%"}} className="input__submit" type="submit" raised/>
                 </form>

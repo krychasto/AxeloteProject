@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import "./App.css";
 import {Axelote, AxeloteError, AxeloteQueryBuilder} from "@axelote/js";
 import SearchField from "./components/SearchField";
@@ -19,6 +19,8 @@ import {Dialog} from "primereact/dialog";
 import {Image as ImagePrime} from 'primereact/image';
 import CarCalendar from "./components/CarCalendar";
 import {InputNumber} from "primereact/inputnumber";
+import {FileUpload} from "primereact/fileupload";
+import {Toast} from "primereact/toast";
 
 const App: React.FC = () => {
 
@@ -36,7 +38,6 @@ const App: React.FC = () => {
     const [isAvailable, setIsAvailable] = useState<boolean>(false);
     const [isValidated, setIsValidated] = useState<boolean>(true);
     const [carId, setCarId] = useState<number>(-1);
-
 
     const handleTableUpdate = async (e: React.FormEvent) => {
         const axelote = new Axelote({
@@ -100,6 +101,10 @@ const App: React.FC = () => {
                 .build();
 
             let result = await axelote.void(query, params);
+
+            if (result instanceof AxeloteError) {
+                setErrorMessage(result.getErrorMessage());
+            }
 
             await handleTableUpdate(e);
             setVisibleEdit(false);
@@ -216,6 +221,9 @@ const App: React.FC = () => {
                             setIsAvailable(!isAvailable)
                         }} checked={isAvailable}/>
                         <label> Available</label>
+                    </div>
+                    <div className="card flex justify-content-center">
+                        <FileUpload mode="basic" name="demo[]" url="/api/upload" accept="image/*" maxFileSize={1000000}/>
                     </div>
                     {isValidated ? "" :
                         <label style={{color: "red", marginBottom: "1rem"}}>Complete all fields</label>}

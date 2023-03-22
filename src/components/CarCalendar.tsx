@@ -12,7 +12,6 @@ const CarCalendar = (car: Car) => {
     const [price, setPrice] = useState<number>(0);
 
     const onDataChange = (e: Date[]) => {
-        console.log(car.engineCapacity);
         if (e[1] === null) {
             setPrice(car.price);
         } else if (e[0] !== null) {
