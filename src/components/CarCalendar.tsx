@@ -37,7 +37,7 @@ const CarCalendar = (car: Car) => {
                     <Calendar value={dates} onChange={(e: CalendarChangeEvent) => {
                         setDates(e.value);
                         onDataChange(e.value as Date[]);
-                    }} selectionMode="range" readOnlyInput showButtonBar style={{marginLeft: "1rem"}}/>
+                    }} minDate={new Date()} selectionMode="range" readOnlyInput showButtonBar style={{marginLeft: "1rem"}}/>
                 </p>
                 <p>
                     <label>Price</label>
