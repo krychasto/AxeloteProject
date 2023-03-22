@@ -5,6 +5,7 @@ import {InputText} from "primereact/inputtext";
 import "./CreateButton.css";
 import {Checkbox} from "primereact/checkbox";
 import {Axelote} from "@axelote/js";
+import {InputNumber} from "primereact/inputnumber";
 
 interface Props {
     handleTableUpdate: (e: React.FormEvent) => void;
@@ -16,6 +17,7 @@ const CreateButton: React.FC<Props> = ({handleTableUpdate}) => {
     const [brand, setBrand] = useState<string>("");
     const [model, setModel] = useState<string>("");
     const [vin, setVin] = useState<string>("");
+    const [price, setPrice] = useState<number>(0);
     const [engineCapacity, setEngineCapacity] = useState<string>("");
     const [isValidated, setIsValidated] = useState<boolean>(true);
 
@@ -23,26 +25,28 @@ const CreateButton: React.FC<Props> = ({handleTableUpdate}) => {
 
         e.preventDefault();
 
-        if (model && brand && vin && engineCapacity) {
-            const params: Record<string, string> = {
+        if (model && brand && vin && engineCapacity && price) {
+            const params: Record<string, string | number> = {
                 model: model,
                 brand: brand,
                 vin: vin,
                 engine_capacity: engineCapacity,
-                is_available: checked ? "true" : "false"
+                is_available: checked ? "true" : "false",
+                price: price,
             }
 
             const axelote = new Axelote({
                 url: "http://localhost:8074"
             })
 
-            let result = await axelote.void("@sql insert into car (brand, model, vin, engine_capacity, is_available) VALUES (:brand, :model, :vin, :engine_capacity, :is_available)", params);
+            let result = await axelote.void("@sql insert into car (brand, model, vin, engine_capacity, is_available, price) VALUES (:brand, :model, :vin, :engine_capacity, :is_available, :price)", params);
 
             setVisible(false);
             setBrand("");
             setModel("");
             setVin("");
             setEngineCapacity("");
+            setPrice(0);
             setChecked(false);
             setIsValidated(true);
             handleTableUpdate(e);
@@ -75,6 +79,11 @@ const CreateButton: React.FC<Props> = ({handleTableUpdate}) => {
                                className={engineCapacity ? "p-inputtext-sm" : "p-inputtext-sm p-invalid"}
                                style={{marginRight: "1rem", marginBottom: "1rem", width: "100%"}}
                                onChange={e => setEngineCapacity(e.target.value)}/>
+                    <label>Price</label>
+                    <InputNumber inputId="currency-us" value={price} mode="currency"
+                                 currency="USD" locale="en-US"
+                                 style={{marginRight: "1rem", marginBottom: "1rem", width: "100%"}}
+                                 onChange={e => e.value !== null ? setPrice(e.value) : ''}/>
                     <div style={{float: "right", marginBottom: "1rem"}}>
                         <Checkbox onChange={(e) => {
                             setChecked(!checked)

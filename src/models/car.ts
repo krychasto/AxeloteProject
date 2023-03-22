@@ -5,6 +5,7 @@ export interface Car {
     vin: string;
     engineCapacity: string;
     isAvailable: string;
+    price: number;
     image: string;
 
 }

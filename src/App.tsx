@@ -16,26 +16,23 @@ import {Button} from "primereact/button";
 import {InputText} from "primereact/inputtext";
 import {Checkbox} from "primereact/checkbox";
 import {Dialog} from "primereact/dialog";
-import { Image as ImagePrime } from 'primereact/image';
+import {Image as ImagePrime} from 'primereact/image';
 import CarCalendar from "./components/CarCalendar";
+import {InputNumber} from "primereact/inputnumber";
 
 const App: React.FC = () => {
-
-    useEffect(() => {
-        console.log("elo");
-    }, []);
 
     const [phrase, setPhrase] = useState<string>("");
     const [cars, setCars] = useState<Car[]>([]);
     const [errorMessage, setErrorMessage] = useState<string>("");
     const [selectedCars, setSelectedCars] = useState<Car[] | undefined>(undefined);
-    const [rowClick, setRowClick] = useState<boolean>(true);
     const [visibleEdit, setVisibleEdit] = useState<boolean>(false);
 
     const [brand, setBrand] = useState<string>("");
     const [model, setModel] = useState<string>("");
     const [vin, setVin] = useState<string>("");
     const [engineCapacity, setEngineCapacity] = useState<string>("");
+    const [price, setPrice] = useState<number>(0);
     const [isAvailable, setIsAvailable] = useState<boolean>(false);
     const [isValidated, setIsValidated] = useState<boolean>(true);
     const [carId, setCarId] = useState<number>(-1);
@@ -83,21 +80,22 @@ const App: React.FC = () => {
 
         e.preventDefault();
 
-        if (model && brand && vin && engineCapacity) {
+        if (model && brand && vin && engineCapacity && price) {
             const params: Record<string, any> = {
                 car_id: carId,
                 model: model,
                 brand: brand,
                 vin: vin,
                 engine_capacity: engineCapacity,
-                is_available: isAvailable ? "true" : "false"
+                is_available: isAvailable ? "true" : "false",
+                price: price
             }
 
             const axelote = new Axelote({
                 url: "http://localhost:8074"
             })
 
-            let query = AxeloteQueryBuilder.query("@sql update car set brand = :brand, model = :model, vin = :vin, engine_capacity = :engine_capacity, is_available = :is_available")
+            let query = AxeloteQueryBuilder.query("@sql update car set brand = :brand, model = :model, vin = :vin, engine_capacity = :engine_capacity, is_available = :is_available, price = :price")
                 .append("@sql where id = :car_id")
                 .build();
 
@@ -120,13 +118,15 @@ const App: React.FC = () => {
     const imageBodyTemplate = (car: Car) => {
         const img = new Image();
         img.src = `data:image/jpg;base64,${car.image}`;
-        return <ImagePrime src={img.src} alt='mustang.jpg' width="100" preview className="w-6rem shadow-2 border-round"/>;
+        return <ImagePrime src={img.src} alt={car.brand + '_' + car.model} width="100" preview
+                           className="w-6rem shadow-2 border-round"/>;
     };
 
     const editButtonTemplate = (car: Car) => {
         return (
             <div>
-            <Button icon="pi pi-pencil" rounded outlined style={{width: "2.5rem", height: "2.5rem", marginRight:"0.4rem"}}
+                <Button icon="pi pi-pencil" rounded outlined
+                        style={{width: "2.5rem", height: "2.5rem", marginRight: "0.4rem"}}
                         onClick={() => {
                             setModel(car.model);
                             setBrand(car.brand);
@@ -135,15 +135,19 @@ const App: React.FC = () => {
                             setIsAvailable(car.isAvailable === 'true');
                             setVisibleEdit(true);
                             setCarId(car.id);
+                            setPrice(car.price);
                         }}/>
-                <Button icon="pi pi-car" rounded outlined style={{width: "2.5rem", height: "2.5rem"}} onClick={() => {}}/>
             </div>
-    )
+        )
     }
 
-    const rentButtonTemplate = (car: Car) => {
-        return
-    }
+    const formatCurrency = (value: number) => {
+        return value.toLocaleString('en-US', {style: 'currency', currency: 'USD'});
+    };
+
+    const priceBodyTemplate = (car: Car) => {
+        return formatCurrency(car.price);
+    };
 
     return (
         <div className="App">
@@ -151,8 +155,9 @@ const App: React.FC = () => {
             <SearchField phrase={phrase} setPhrase={setPhrase} handleSearch={handleSearch}/>
             <div style={{width: "auto"}}>
                 <DataTable value={cars} stripedRows scrollable scrollHeight="375px"
-                           selectionMode={rowClick ? undefined : "multiple"}
+                           selectionMode={"multiple"}
                            selection={selectedCars}
+                           metaKeySelection={false}
                            onSelectionChange={(e) => setSelectedCars(e.value as Car[])}
                            style={{color: "white", marginTop: "2rem"}}
                            tableStyle={{
@@ -161,15 +166,18 @@ const App: React.FC = () => {
                                backgroundColor: "inherit",
                                borderSpacing: "0px"
                            }} sortField="brand">
-                    <Column selectionMode="multiple" headerStyle={{width: "auto"}}></Column>
+                    {/*<Column selectionMode="multiple" headerStyle={{width: "auto"}}></Column>*/}
                     <Column field="brand" header="Brand" style={{width: "auto"}}></Column>
                     <Column field="model" header="Model" style={{width: "auto"}}></Column>
                     <Column header="Image" body={imageBodyTemplate} style={{width: "auto"}}></Column>
                     <Column field="vin" header="VIN" style={{width: "auto"}}></Column>
                     <Column field="engineCapacity" header="Engine Capacity" style={{width: "5rem"}}></Column>
+                    <Column field="price" header="Price per day" body={priceBodyTemplate}
+                            style={{width: "6rem"}}></Column>
                     <Column field="isAvailable" header="Status" body={statusBodyTemplate}
                             style={{width: "auto"}}></Column>
-                    <Column body={editButtonTemplate} style={{width: "8rem"}}></Column>
+                    <Column body={editButtonTemplate} style={{width: "3rem", padding: "16px 0px"}}></Column>
+                    <Column body={CarCalendar} style={{width: "3rem", padding: "16px 0px"}}></Column>
                 </DataTable>
             </div>
             <div style={{display: "flex", flexDirection: "row"}}>
@@ -197,6 +205,12 @@ const App: React.FC = () => {
                                className={engineCapacity ? "p-inputtext-sm" : "p-inputtext-sm p-invalid"}
                                style={{marginRight: "1rem", marginBottom: "1rem", width: "100%"}}
                                onChange={e => setEngineCapacity(e.target.value)}/>
+                    <label>Price </label>
+                    <InputNumber inputId="currency-us" value={price} mode="currency"
+                                 className={price ? "p-inputtext-sm" : "p-inputtext-sm p-invalid"}
+                                 currency="USD" locale="en-US"
+                                 style={{marginRight: "1rem", marginBottom: "1rem", width: "100%"}}
+                                 onChange={e => e.value !== null ? setPrice(e.value) : ''}/>
                     <div style={{float: "right", marginBottom: "1rem"}}>
                         <Checkbox onChange={(e) => {
                             setIsAvailable(!isAvailable)
@@ -209,7 +223,6 @@ const App: React.FC = () => {
                             raised/>
                 </form>
             </Dialog>
-            <CarCalendar/>
         </div>
     );
 };
