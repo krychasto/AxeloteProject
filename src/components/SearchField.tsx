@@ -15,9 +15,9 @@ const SearchField: React.FC<Props> = ({phrase, setPhrase, handleSearch}) => {
             <InputText type="input"
                        placeholder="Enter a brand, model, vin, engine capacity"
                        value={phrase}
-                       style={{width: "49rem", marginRight: "1rem", background: "inherit", color: "white"}}
+                       style={{width: "49rem", marginRight: "1rem", background: "inherit", color: "white", borderColor:"inherit"}}
                        onChange={(e) => setPhrase(e.target.value)}/>
-            <Button icon="pi pi-search" className="input__submit" type="submit" rounded raised style={{}}/>
+            <Button icon="pi pi-search" className="input__submit" type="submit" rounded raised style={{backgroundColor:"inherit", borderColor:"black", borderRadius:"10px"}}/>
         </form>
     );
 };

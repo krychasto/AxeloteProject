@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import "./App.css";
 import {Axelote, AxeloteError, AxeloteQueryBuilder} from "@axelote/js";
 import SearchField from "./components/SearchField";
@@ -16,8 +16,14 @@ import {Button} from "primereact/button";
 import {InputText} from "primereact/inputtext";
 import {Checkbox} from "primereact/checkbox";
 import {Dialog} from "primereact/dialog";
+import { Image as ImagePrime } from 'primereact/image';
+import CarCalendar from "./components/CarCalendar";
 
 const App: React.FC = () => {
+
+    useEffect(() => {
+        console.log("elo");
+    }, []);
 
     const [phrase, setPhrase] = useState<string>("");
     const [cars, setCars] = useState<Car[]>([]);
@@ -33,6 +39,7 @@ const App: React.FC = () => {
     const [isAvailable, setIsAvailable] = useState<boolean>(false);
     const [isValidated, setIsValidated] = useState<boolean>(true);
     const [carId, setCarId] = useState<number>(-1);
+
 
     const handleTableUpdate = async (e: React.FormEvent) => {
         const axelote = new Axelote({
@@ -63,7 +70,6 @@ const App: React.FC = () => {
         })
 
         let result = await axelote.returning("@sql select * from car where upper(brand) like upper(:search) or upper(model) like upper(:search) or upper(vin) like upper(:search) or upper(engine_capacity) like upper(:search) order by brand", params);
-
         if (result instanceof Array) {
             setCars(result)
         } else if (result instanceof AxeloteError) {
@@ -111,42 +117,59 @@ const App: React.FC = () => {
                     severity={available ? "success" : "danger"}></Tag>;
     };
 
+    const imageBodyTemplate = (car: Car) => {
+        const img = new Image();
+        img.src = `data:image/jpg;base64,${car.image}`;
+        return <ImagePrime src={img.src} alt='mustang.jpg' width="100" preview className="w-6rem shadow-2 border-round"/>;
+    };
+
     const editButtonTemplate = (car: Car) => {
-        return <Button icon="pi pi-pencil" rounded outlined style={{width: "2.5rem", height: "2.5rem"}}
-                       onClick={() => {
-                           setModel(car.model);
-                           setBrand(car.brand);
-                           setVin(car.vin);
-                           setEngineCapacity(car.engineCapacity);
-                           setIsAvailable(car.isAvailable === 'true');
-                           setVisibleEdit(true);
-                           setCarId(car.id);
-                       }}/>
+        return (
+            <div>
+            <Button icon="pi pi-pencil" rounded outlined style={{width: "2.5rem", height: "2.5rem", marginRight:"0.4rem"}}
+                        onClick={() => {
+                            setModel(car.model);
+                            setBrand(car.brand);
+                            setVin(car.vin);
+                            setEngineCapacity(car.engineCapacity);
+                            setIsAvailable(car.isAvailable === 'true');
+                            setVisibleEdit(true);
+                            setCarId(car.id);
+                        }}/>
+                <Button icon="pi pi-car" rounded outlined style={{width: "2.5rem", height: "2.5rem"}} onClick={() => {}}/>
+            </div>
+    )
+    }
+
+    const rentButtonTemplate = (car: Car) => {
+        return
     }
 
     return (
         <div className="App">
             <span className="heading">Car Rental</span>
             <SearchField phrase={phrase} setPhrase={setPhrase} handleSearch={handleSearch}/>
-            <div style={{width: "54.05rem"}}>
-                <DataTable value={cars} stripedRows scrollable scrollHeight="420px"
+            <div style={{width: "auto"}}>
+                <DataTable value={cars} stripedRows scrollable scrollHeight="375px"
                            selectionMode={rowClick ? undefined : "multiple"}
                            selection={selectedCars}
                            onSelectionChange={(e) => setSelectedCars(e.value as Car[])}
                            style={{color: "white", marginTop: "2rem"}}
                            tableStyle={{
-                               width: "53rem",
+                               width: "auto",
+                               minWidth: "55rem",
                                backgroundColor: "inherit",
-                               borderSpacing: "0px",
+                               borderSpacing: "0px"
                            }} sortField="brand">
-                    <Column selectionMode="multiple" headerStyle={{width: "3rem"}}></Column>
-                    <Column field="brand" header="Brand" style={{width: "10rem"}}></Column>
-                    <Column field="model" header="Model" style={{width: "10rem"}}></Column>
-                    <Column field="vin" header="VIN" style={{width: "12rem"}}></Column>
-                    <Column field="engineCapacity" header="Engine Capacity" style={{width: "9rem"}}></Column>
+                    <Column selectionMode="multiple" headerStyle={{width: "auto"}}></Column>
+                    <Column field="brand" header="Brand" style={{width: "auto"}}></Column>
+                    <Column field="model" header="Model" style={{width: "auto"}}></Column>
+                    <Column header="Image" body={imageBodyTemplate} style={{width: "auto"}}></Column>
+                    <Column field="vin" header="VIN" style={{width: "auto"}}></Column>
+                    <Column field="engineCapacity" header="Engine Capacity" style={{width: "5rem"}}></Column>
                     <Column field="isAvailable" header="Status" body={statusBodyTemplate}
-                            style={{width: "10rem"}}></Column>
-                    <Column body={editButtonTemplate}></Column>
+                            style={{width: "auto"}}></Column>
+                    <Column body={editButtonTemplate} style={{width: "8rem"}}></Column>
                 </DataTable>
             </div>
             <div style={{display: "flex", flexDirection: "row"}}>
@@ -186,6 +209,7 @@ const App: React.FC = () => {
                             raised/>
                 </form>
             </Dialog>
+            <CarCalendar/>
         </div>
     );
 };
