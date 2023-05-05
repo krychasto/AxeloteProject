@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useState} from "react";
 import "./App.css";
 import {Axelote, AxeloteError, AxeloteQueryBuilder} from "@axelote/js";
 import SearchField from "./components/SearchField";
@@ -20,7 +20,6 @@ import {Image as ImagePrime} from 'primereact/image';
 import CarCalendar from "./components/CarCalendar";
 import {InputNumber} from "primereact/inputnumber";
 import {FileUpload} from "primereact/fileupload";
-import {Toast} from "primereact/toast";
 
 const App: React.FC = () => {
 
@@ -49,7 +48,7 @@ const App: React.FC = () => {
         if (result instanceof Array) {
             setCars(result)
         } else if (result instanceof AxeloteError) {
-            setErrorMessage(result.getErrorMessage());
+            setErrorMessage(result.getMessage());
         } else {
             setErrorMessage("Something went wrong");
         }
@@ -64,14 +63,14 @@ const App: React.FC = () => {
         e.preventDefault();
 
         const axelote = new Axelote({
-            url: "http://localhost:8074"
+            url: "http://localhost:8074",
         })
 
         let result = await axelote.returning("@sql select * from car where upper(brand) like upper(:search) or upper(model) like upper(:search) or upper(vin) like upper(:search) or upper(engine_capacity) like upper(:search) order by brand", params);
         if (result instanceof Array) {
             setCars(result)
         } else if (result instanceof AxeloteError) {
-            setErrorMessage(result.getErrorMessage());
+            setErrorMessage(result.getMessage());
         } else {
             setErrorMessage("Something went wrong");
         }
@@ -96,14 +95,14 @@ const App: React.FC = () => {
                 url: "http://localhost:8074"
             })
 
-            let query = AxeloteQueryBuilder.query("@sql update car set brand = :brand, model = :model, vin = :vin, engine_capacity = :engine_capacity, is_available = :is_available, price = :price")
+            let query = AxeloteQueryBuilder.of("@sql update car set brand = :brand, model = :model, vin = :vin, engine_capacity = :engine_capacity, is_available = :is_available, price = :price")
                 .append("@sql where id = :car_id")
                 .build();
 
             let result = await axelote.void(query, params);
 
             if (result instanceof AxeloteError) {
-                setErrorMessage(result.getErrorMessage());
+                setErrorMessage(result.getMessage());
             }
 
             await handleTableUpdate(e);
@@ -121,10 +120,15 @@ const App: React.FC = () => {
     };
 
     const imageBodyTemplate = (car: Car) => {
-        const img = new Image();
-        img.src = `data:image/jpg;base64,${car.image}`;
-        return <ImagePrime src={img.src} alt={car.brand + '_' + car.model} width="100" preview
-                           className="w-6rem shadow-2 border-round"/>;
+        if (car.image !== null) {
+            const img = new Image();
+            img.src = `data:image/jpg;base64,${car.image}`;
+            return <ImagePrime src={img.src} alt={car.brand + '_' + car.model} width="100" preview
+                               className="w-6rem shadow-2 border-round"/>;
+        } else {
+            return ""
+        }
+
     };
 
     const editButtonTemplate = (car: Car) => {
@@ -151,7 +155,11 @@ const App: React.FC = () => {
     };
 
     const priceBodyTemplate = (car: Car) => {
-        return formatCurrency(car.price);
+        if (car.price !== null) {
+            return formatCurrency(car.price);
+        } else {
+            return ""
+        }
     };
 
     return (
@@ -223,7 +231,8 @@ const App: React.FC = () => {
                         <label> Available</label>
                     </div>
                     <div className="card flex justify-content-center">
-                        <FileUpload mode="basic" name="demo[]" url="/api/upload" accept="image/*" maxFileSize={1000000}/>
+                        <FileUpload mode="basic" name="demo[]" url="/api/upload" accept="image/*"
+                                    maxFileSize={1000000}/>
                     </div>
                     {isValidated ? "" :
                         <label style={{color: "red", marginBottom: "1rem"}}>Complete all fields</label>}
